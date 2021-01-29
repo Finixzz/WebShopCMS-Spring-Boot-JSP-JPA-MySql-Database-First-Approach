@@ -42,7 +42,7 @@
 						<div class="form-group">
                             <form:label path="categoryId" class="text-secondary">Category</form:label>
                             <form:select  path="categoryId" class="form-control" required="required">
-                               <option value="${model.categoryId}">${viewModel.categoryList.get(model.categoryId).getName()}</option>
+                               <option value="${model.categoryId}">${viewModel.getCategoryById(model.categoryId).getName()}</option>
                                <c:forEach var="categories" items="${viewModel.categoryList}">
                                		<c:if test="${categories.categoryId!=model.categoryId}">
 	                               		<option value="${categories.categoryId}">${categories.name} |
