@@ -98,7 +98,7 @@ public class ItemController {
 							      BindingResult result) {
 		
 		if(result.hasErrors())
-			return "redirect:/categories/new";
+			return "redirect:/items/new";
 		
 		IAction command=new CreateItemCommand(item);
 		
