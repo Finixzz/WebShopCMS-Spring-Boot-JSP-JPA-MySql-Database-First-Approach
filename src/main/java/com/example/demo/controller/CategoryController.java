@@ -46,7 +46,6 @@ public class CategoryController {
 		return "newcategory";
 	}
 	
-	
 	@PostMapping({"/categories/save"})
 	public String saveNewCategory(@Validated @ModelAttribute("model") Category category,
 							      BindingResult result) {

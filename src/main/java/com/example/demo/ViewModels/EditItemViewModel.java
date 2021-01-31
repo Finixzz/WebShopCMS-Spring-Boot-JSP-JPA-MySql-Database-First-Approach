@@ -49,17 +49,22 @@ public class EditItemViewModel {
 	
 	public Category getCategoryById(int categoryId)
 	{
-		for(int i=0;i<CategoryList.size();i++)
+		for(int i=0;i<CategoryList.size();i++) 
+		{
 			if(CategoryList.get(i).getCategoryId()==categoryId)
 				return CategoryList.get(i);
+		}
+			
 		return null;
 	}
 	
 	public Size getSizeById(int sizeId)
 	{
 		for(int i=0;i<SizeList.size();i++)
+		{
 			if(SizeList.get(i).getSizeId()==sizeId)
 				return SizeList.get(i);
+		}
 		return null;
 	}
 

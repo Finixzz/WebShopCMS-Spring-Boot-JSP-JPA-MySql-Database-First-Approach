@@ -10,6 +10,11 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.demo.ViewModels.ItemViewModel;
 import com.example.demo.domain.Category;
 import com.example.demo.domain.Item;
+import com.example.demo.microservices.core.AppDbContext;
+import com.example.demo.microservices.core.Broker;
+import com.example.demo.microservices.core.IAction;
+import com.example.demo.microservices.core.Items.Commands.DeleteItemCommand;
+import com.example.demo.microservices.core.Items.Queries.GetAllItemsViewModelQuery;
 import com.example.demo.repository.ICategoryRepository;
 import com.example.demo.repository.IItemRepository;
 
@@ -17,18 +22,24 @@ import com.example.demo.repository.IItemRepository;
 public class ItemsController {
 
 	@Autowired
-	private IItemRepository _itemRepository;
+	private AppDbContext _appDbContext;
+	
+	@Autowired
+	private Broker _broker;
+	
 	
 	@GetMapping("/api/items/all")
 	List<Item> GetAllItems(){
-		return _itemRepository.findAll();
+		IAction query=new GetAllItemsViewModelQuery();
+		
+		return _broker.executeAction(query, _appDbContext);
 	}
 	
 	
 	/// /api/items?categoryId=
 	@GetMapping("/api/items")
 	List<Item> GetItemsByCategory(@RequestParam(name="categoryId")	Integer categoryId ){
-		return _itemRepository.getItemsByCategory(categoryId);
+		return _appDbContext.items.getItemsByCategory(categoryId);
 	}
 	
 	

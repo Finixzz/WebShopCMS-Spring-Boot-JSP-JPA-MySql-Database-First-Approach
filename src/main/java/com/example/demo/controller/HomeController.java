@@ -19,19 +19,20 @@ import com.example.demo.repository.ISizeRepository;
 import net.bytebuddy.asm.Advice.OffsetMapping.Sort;
 
 import com.example.demo.domain.Size;
+import com.example.demo.microservices.core.AppDbContext;
+import com.example.demo.microservices.core.Broker;
+import com.example.demo.microservices.core.IAction;
+import com.example.demo.microservices.core.Items.Queries.GetDiscountedItemsViewModelQuery;
 
 @Controller
 public class HomeController {
 	
 	@Autowired
-	private IItemRepository _itemRepository;
-	
-	
-	@Autowired
-	private ICategoryRepository _categoryRepository;
+	private AppDbContext _appDbContext;
 	
 	@Autowired
-	private ISizeRepository _sizeRepository;
+	private Broker _broker;
+	
 	
 	
 	
@@ -43,24 +44,9 @@ public class HomeController {
 	@GetMapping({"/home","/index"})
 	public String showHomePage(Model model) {
 		
-		List<ItemViewModel> discountedItemsviewModelList=new LinkedList<ItemViewModel>();
+		IAction query=new GetDiscountedItemsViewModelQuery();
 		
-		List<Item> discountedItems=_itemRepository.getDiscountedItems();
-		for(int i=0;i<discountedItems.size();i++) {
-			Item item=discountedItems.get(i);
-			
-			ItemViewModel discountedItemviewModel=new ItemViewModel();
-			discountedItemviewModel.setItem(item);
-			
-			Category category=_categoryRepository.findById(item.getCategoryId()).orElse(null);
-			discountedItemviewModel.setCategory(category);
-			
-			Size size = _sizeRepository.findById(item.getSizeId()).orElse(null);
-			discountedItemviewModel.setSize(size);
-		
-			discountedItemsviewModelList.add(discountedItemviewModel);
-		}
-	
+		List<ItemViewModel> discountedItemsviewModelList=_broker.executeAction(query, _appDbContext);
 		
 		model.addAttribute("model",discountedItemsviewModelList);		
 		return "index";

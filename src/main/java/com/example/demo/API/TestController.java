@@ -11,7 +11,7 @@ import com.example.demo.ViewModels.ItemViewModel;
 import com.example.demo.microservices.core.AppDbContext;
 import com.example.demo.microservices.core.Broker;
 import com.example.demo.microservices.core.IAction;
-import com.example.demo.microservices.core.Items.Queries.GetItemsByCategoryQuery;
+import com.example.demo.microservices.core.Items.Queries.GetItemsByCategoryViewModelQuery;
 
 @RestController
 public class TestController {
@@ -25,7 +25,7 @@ public class TestController {
 	
 	@GetMapping("/api/test/items")
 	List<ItemViewModel> GetItemsByCategory(@RequestParam(name="categoryId")	Integer categoryId ){
-		IAction query=new GetItemsByCategoryQuery(categoryId);
+		IAction query=new GetItemsByCategoryViewModelQuery(categoryId);
 		return _broker.executeAction(query,_appDbContext);
 	}
 	

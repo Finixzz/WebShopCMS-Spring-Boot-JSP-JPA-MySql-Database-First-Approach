@@ -20,22 +20,25 @@ import com.example.demo.ViewModels.ItemViewModel;
 import com.example.demo.domain.Category;
 import com.example.demo.domain.Item;
 import com.example.demo.domain.Size;
-import com.example.demo.repository.ICategoryRepository;
-import com.example.demo.repository.IItemRepository;
-import com.example.demo.repository.ISizeRepository;
+import com.example.demo.microservices.core.AppDbContext;
+import com.example.demo.microservices.core.Broker;
+import com.example.demo.microservices.core.IAction;
+import com.example.demo.microservices.core.Items.Queries.GetItemsByCategoryViewModelQuery;
+import com.example.demo.microservices.core.Items.Commands.CreateItemCommand;
+import com.example.demo.microservices.core.Items.Commands.DeleteItemCommand;
+import com.example.demo.microservices.core.Items.Commands.EditItemCommand;
+import com.example.demo.microservices.core.Items.Queries.GetAllItemsViewModelQuery;
 
 @Controller
 public class ItemController {
 	
-	@Autowired
-	private IItemRepository _itemRepository;
-	
+
 	
 	@Autowired
-	private ICategoryRepository _categoryRepository;
+	private AppDbContext _appDbContext;
 	
 	@Autowired
-	private ISizeRepository _sizeRepository;
+	private Broker _broker;
 	
 	
 	/// endpoint /items?gender=&categoryId=
@@ -44,24 +47,9 @@ public class ItemController {
 							   				   @RequestParam(name="categoryId") Integer categoryId, 
 							   				   Model model) {
 		
-		List<ItemViewModel> itemsByCategoryViewModel=new LinkedList<ItemViewModel>();
+		IAction query=new GetItemsByCategoryViewModelQuery(categoryId);
 		
-		List<Item> itemsByGenderAndCategory=_itemRepository.getItemsByCategory(categoryId);
-		for(int i=0;i<itemsByGenderAndCategory.size();i++) {
-			Item item=itemsByGenderAndCategory.get(i);
-			
-			ItemViewModel itemByCategoryViewModel=new ItemViewModel();
-			itemByCategoryViewModel.setItem(item);
-			
-			Category category=_categoryRepository.findById(item.getCategoryId()).orElse(null);
-			itemByCategoryViewModel.setCategory(category);
-			
-			Size size = _sizeRepository.findById(item.getSizeId()).orElse(null);
-			itemByCategoryViewModel.setSize(size);
-		
-			itemsByCategoryViewModel.add(itemByCategoryViewModel);
-		}
-	
+		List<ItemViewModel> itemsByCategoryViewModel=_broker.executeAction(query,_appDbContext);
 		
 		model.addAttribute("model",itemsByCategoryViewModel);		
 		return "itemsbygenderandcategory";
@@ -71,24 +59,10 @@ public class ItemController {
 	@GetMapping({"/items/all","/itemlist"})
 	public String showItems(Model model) {
 		
-		List<ItemViewModel> itemViewModelList=new LinkedList<ItemViewModel>();
+		IAction query=new GetAllItemsViewModelQuery();
+
+		List<ItemViewModel> itemViewModelList=_broker.executeAction(query,_appDbContext);
 		
-		List<Item> itemsInDb=_itemRepository.findAll();
-		for(int i=0;i<itemsInDb.size();i++) {
-			Item item=itemsInDb.get(i);
-			
-			ItemViewModel itemViewModel=new ItemViewModel();
-			itemViewModel.setItem(item);
-			
-			Category category=_categoryRepository.findById(item.getCategoryId()).orElse(null);
-			itemViewModel.setCategory(category);
-			
-			Size size = _sizeRepository.findById(item.getSizeId()).orElse(null);
-			itemViewModel.setSize(size);
-		
-			itemViewModelList.add(itemViewModel);
-		}
-	
 		
 		model.addAttribute("model",itemViewModelList);		
 		return "itemlist";
@@ -100,14 +74,14 @@ public class ItemController {
 		
 		CreateItemViewModel createItemViewModel=new CreateItemViewModel();
 		
-		List<Item> itemsInDb=_itemRepository.findAll();
+		List<Item> itemsInDb=_appDbContext.items.findAll();
 		for(int i=0;i<itemsInDb.size();i++) {
 
 			
-			List<Category> categories=_categoryRepository.findAll();
+			List<Category> categories=_appDbContext.categories.findAll();
 			createItemViewModel.setCategoryList(categories);
 			
-			List<Size> sizes = _sizeRepository.findAll();
+			List<Size> sizes = _appDbContext.sizes.findAll();
 			createItemViewModel.setSizeList(sizes);
 			
 		
@@ -126,7 +100,9 @@ public class ItemController {
 		if(result.hasErrors())
 			return "redirect:/categories/new";
 		
-		_itemRepository.save(item);
+		IAction command=new CreateItemCommand(item);
+		
+		_broker.executeAction(command, _appDbContext);
 		
 		return "redirect:/items/all";
 	}
@@ -137,20 +113,18 @@ public class ItemController {
 		
 		EditItemViewModel editItemViewModel=new EditItemViewModel();
 
-		editItemViewModel.Item=_itemRepository.findById(itemId).orElse(null);
+		editItemViewModel.Item=_appDbContext.items.findById(itemId).orElse(null);
 		
-		List<Item> itemsInDb=_itemRepository.findAll();
+		List<Item> itemsInDb=_appDbContext.items.findAll();
 		for(int i=0;i<itemsInDb.size();i++) {
 
 			
-			List<Category> categories=_categoryRepository.findAll();
+			List<Category> categories=_appDbContext.categories.findAll();
 			editItemViewModel.setCategoryList(categories);
 			
-			List<Size> sizes = _sizeRepository.findAll();
+			List<Size> sizes = _appDbContext.sizes.findAll();
 			editItemViewModel.setSizeList(sizes);
-			
-		
-			
+
 		}
 		
 		
@@ -162,26 +136,10 @@ public class ItemController {
 	@PostMapping({"/items/edit","/edititem"})
 	public String saveEditedItem(@Validated @ModelAttribute("model") Item item,
 							  Model model) {
-		Item itemInDb=_itemRepository.findById(item.getItemId()).orElse(null);
 		
+		IAction command=new EditItemCommand(item);
 		
-		itemInDb.setCategoryId(item.getCategoryId());
-		itemInDb.setSizeId(item.getSizeId());
-		itemInDb.setName(item.getName());
-		itemInDb.setDescription(item.getDescription());
-		
-		if(item.getDiscountRate()==0)
-		{
-			itemInDb.setIsDiscounted(false);
-			itemInDb.setDiscountRate(0);
-		}
-		else
-		{
-			itemInDb.setIsDiscounted(true);
-			itemInDb.setDiscountRate(item.getDiscountRate());
-		}
-		
-		_categoryRepository.flush();
+		_broker.executeAction(command, _appDbContext);
 		
 		return "redirect:/items/all";
 	}
@@ -190,9 +148,9 @@ public class ItemController {
 	@PostMapping({"/items/delete/{id}","/items/all"})
 	public String deleteCategory(@PathVariable int id) {
 		
-		Item itemInDb=_itemRepository.findById(id).orElse(null);
+		IAction command=new DeleteItemCommand(id);
 		
-		_itemRepository.delete(itemInDb);
+		_broker.executeAction(command, _appDbContext);
 		
 		return "redirect:/items/all";
 	}

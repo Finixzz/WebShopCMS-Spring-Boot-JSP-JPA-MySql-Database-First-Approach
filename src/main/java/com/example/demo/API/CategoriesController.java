@@ -7,18 +7,23 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.demo.domain.Category;
+import com.example.demo.microservices.core.AppDbContext;
+import com.example.demo.microservices.core.Broker;
 import com.example.demo.repository.ICategoryRepository;
 
 @RestController
 public class CategoriesController {
 
 	@Autowired
-	private ICategoryRepository _categoryRepository;
+	private AppDbContext _appDbContext;
+	
+	@Autowired
+	private Broker _broker;
 	
 	
 	@GetMapping("/api/categories")
 	List<Category>GetAllCategories(){
-		return _categoryRepository.findAll();
+		return _appDbContext.categories.findAll();
 	}
 	
 	
